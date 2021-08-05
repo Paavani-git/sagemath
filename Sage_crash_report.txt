@@ -1,0 +1,691 @@
+***************************************************************************
+
+IPython post-mortem report
+
+{'commit_hash': '<not found>',
+ 'commit_source': '(none found)',
+ 'default_encoding': 'utf-8',
+ 'ipython_path': '/usr/lib/python3/dist-packages/IPython',
+ 'ipython_version': '7.13.0',
+ 'os_name': 'posix',
+ 'platform': 'Linux-5.8.0-63-generic-x86_64-with-glibc2.29',
+ 'sys_executable': '/usr/bin/python3',
+ 'sys_platform': 'linux',
+ 'sys_version': '3.8.10 (default, Jun  2 2021, 10:49:15) \n[GCC 9.4.0]'}
+
+***************************************************************************
+
+
+
+***************************************************************************
+
+Crash traceback:
+
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+AttributeError                              Python 3.8.10: /usr/bin/python3
+                                                   Thu Aug  5 09:15:29 2021
+A problem occurred executing Python code.  Here is the sequence of function
+calls leading up to the error, with the most recent (innermost) call last.
+/usr/share/sagemath/bin/sage-ipython in <module>
+      1 #!/usr/bin/env sage-python
+      2 # -*- coding: utf-8 -*-
+      3 """
+      4 Sage IPython startup script.
+      5 """
+      6 
+      7 # Display startup banner. Do this before anything else to give the user
+      8 # early feedback that Sage is starting.
+      9 from sage.misc.banner import banner
+     10 banner()
+     11 
+     12 from sage.repl.interpreter import SageTerminalApp
+     13 
+     14 app = SageTerminalApp.instance()
+---> 15 app.initialize()
+        global app.initialize = <bound method TerminalIPythonApp.initialize of <sage.repl.interpreter.SageTerminalApp object at 0x7f8155c4e3d0>>
+     16 app.start()
+
+<decorator-gen-113> in initialize(self=<sage.repl.interpreter.SageTerminalApp object>, argv=None)
+
+/usr/lib/python3/dist-packages/traitlets/config/application.py in catch_config_error(method=<function TerminalIPythonApp.initialize>, app=<sage.repl.interpreter.SageTerminalApp object>, *args=(None,), **kwargs={})
+     72     TRAITLETS_APPLICATION_RAISE_CONFIG_FILE_ERROR = False
+     73 else:
+     74     raise ValueError("Unsupported value for environment variable: 'TRAITLETS_APPLICATION_RAISE_CONFIG_FILE_ERROR' is set to '%s' which is none of  {'0', '1', 'false', 'true', ''}."% _envvar )
+     75 
+     76 
+     77 @decorator
+     78 def catch_config_error(method, app, *args, **kwargs):
+     79     """Method decorator for catching invalid config (Trait/ArgumentErrors) during init.
+     80 
+     81     On a TraitError (generally caused by bad config), this will print the trait's
+     82     message, and exit the app.
+     83 
+     84     For use on init methods, to prevent invoking excepthook on invalid input.
+     85     """
+     86     try:
+---> 87         return method(app, *args, **kwargs)
+        method = <function TerminalIPythonApp.initialize at 0x7f81544a25e0>
+        app = <sage.repl.interpreter.SageTerminalApp object at 0x7f8155c4e3d0>
+        args = (None,)
+        kwargs = {}
+     88     except (TraitError, ArgumentError) as e:
+     89         app.print_help()
+     90         app.log.fatal("Bad config encountered during initialization:")
+     91         app.log.fatal(str(e))
+     92         app.log.debug("Config at the time: %s", app.config)
+     93         app.exit(1)
+     94 
+     95 
+     96 class ApplicationError(Exception):
+     97     pass
+     98 
+     99 
+    100 class LevelFormatter(logging.Formatter):
+    101     """Formatter with additional `highlevel` record
+    102 
+
+/usr/lib/python3/dist-packages/IPython/terminal/ipapp.py in initialize(self=<sage.repl.interpreter.SageTerminalApp object>, argv=None)
+    302 
+    303         return super(TerminalIPythonApp, self).parse_command_line(argv)
+    304     
+    305     @catch_config_error
+    306     def initialize(self, argv=None):
+    307         """Do actions after construct, but before starting the app."""
+    308         super(TerminalIPythonApp, self).initialize(argv)
+    309         if self.subapp is not None:
+    310             # don't bother initializing further, starting subapp
+    311             return
+    312         # print self.extra_args
+    313         if self.extra_args and not self.something_to_run:
+    314             self.file_to_run = self.extra_args[0]
+    315         self.init_path()
+    316         # create the shell
+--> 317         self.init_shell()
+        self.init_shell = <bound method SageTerminalApp.init_shell of <sage.repl.interpreter.SageTerminalApp object at 0x7f8155c4e3d0>>
+    318         # and draw the banner
+    319         self.init_banner()
+    320         # Now a variety of things that happen after the banner is printed.
+    321         self.init_gui_pylab()
+    322         self.init_extensions()
+    323         self.init_code()
+    324 
+    325     def init_shell(self):
+    326         """initialize the InteractiveShell instance"""
+    327         # Create an InteractiveShell instance.
+    328         # shell.display_banner should always be False for the terminal
+    329         # based app, because we call shell.show_banner() by hand below
+    330         # so the banner shows *before* all extension loading stuff.
+    331         self.shell = self.interactive_shell_class.instance(parent=self,
+    332                         profile_dir=self.profile_dir,
+
+/usr/lib/python3/dist-packages/sage/repl/interpreter.py in init_shell(self=<sage.repl.interpreter.SageTerminalApp object>)
+    727         self.shell.has_sage_extensions = SAGE_EXTENSION in self.extensions
+    728 
+    729         # Load the %lprun extension if available
+    730         try:
+    731             import line_profiler
+    732         except ImportError:
+    733             pass
+    734         else:
+    735             self.extensions.append('line_profiler')
+    736 
+    737         if self.shell.has_sage_extensions:
+    738             self.extensions.remove(SAGE_EXTENSION)
+    739 
+    740             # load sage extension here to get a crash if
+    741             # something is wrong with the sage library
+--> 742             self.shell.extension_manager.load_extension(SAGE_EXTENSION)
+        self.shell.extension_manager.load_extension = <bound method ExtensionManager.load_extension of <IPython.core.extensions.ExtensionManager object at 0x7f81525f3670>>
+        global SAGE_EXTENSION = 'sage'
+    743 
+    744 
+
+/usr/lib/python3/dist-packages/IPython/core/extensions.py in load_extension(self=<IPython.core.extensions.ExtensionManager object>, module_str='sage')
+     72         if module_str in self.loaded:
+     73             return "already loaded"
+     74 
+     75         from IPython.utils.syspathcontext import prepended_to_syspath
+     76 
+     77         with self.shell.builtin_trap:
+     78             if module_str not in sys.modules:
+     79                 with prepended_to_syspath(self.ipython_extension_dir):
+     80                     mod = import_module(module_str)
+     81                     if mod.__file__.startswith(self.ipython_extension_dir):
+     82                         print(("Loading extensions from {dir} is deprecated. "
+     83                                "We recommend managing extensions like any "
+     84                                "other Python packages, in site-packages.").format(
+     85                               dir=compress_user(self.ipython_extension_dir)))
+     86             mod = sys.modules[module_str]
+---> 87             if self._call_load_ipython_extension(mod):
+        self._call_load_ipython_extension = <bound method ExtensionManager._call_load_ipython_extension of <IPython.core.extensions.ExtensionManager object at 0x7f81525f3670>>
+        mod = <module 'sage' from '/usr/lib/python3/dist-packages/sage/__init__.py'>
+     88                 self.loaded.add(module_str)
+     89             else:
+     90                 return "no load function"
+     91 
+     92     def unload_extension(self, module_str):
+     93         """Unload an IPython extension by its module name.
+     94 
+     95         This function looks up the extension's name in ``sys.modules`` and
+     96         simply calls ``mod.unload_ipython_extension(self)``.
+     97         
+     98         Returns the string "no unload function" if the extension doesn't define
+     99         a function to unload itself, "not loaded" if the extension isn't loaded,
+    100         otherwise None.
+    101         """
+    102         if module_str not in self.loaded:
+
+/usr/lib/python3/dist-packages/IPython/core/extensions.py in _call_load_ipython_extension(self=<IPython.core.extensions.ExtensionManager object>, mod=<module 'sage' from '/usr/lib/python3/dist-packages/sage/__init__.py'>)
+    119         """
+    120         from IPython.utils.syspathcontext import prepended_to_syspath
+    121 
+    122         if (module_str in self.loaded) and (module_str in sys.modules):
+    123             self.unload_extension(module_str)
+    124             mod = sys.modules[module_str]
+    125             with prepended_to_syspath(self.ipython_extension_dir):
+    126                 reload(mod)
+    127             if self._call_load_ipython_extension(mod):
+    128                 self.loaded.add(module_str)
+    129         else:
+    130             self.load_extension(module_str)
+    131 
+    132     def _call_load_ipython_extension(self, mod):
+    133         if hasattr(mod, 'load_ipython_extension'):
+--> 134             mod.load_ipython_extension(self.shell)
+        mod.load_ipython_extension = <function load_ipython_extension at 0x7f8155bb8040>
+        self.shell = <sage.repl.interpreter.SageTerminalInteractiveShell object at 0x7f815443eca0>
+    135             return True
+    136 
+    137     def _call_unload_ipython_extension(self, mod):
+    138         if hasattr(mod, 'unload_ipython_extension'):
+    139             mod.unload_ipython_extension(self.shell)
+    140             return True
+    141 
+    142     @undoc
+    143     def install_extension(self, url, filename=None):
+    144         """
+    145         Deprecated.
+    146         """
+    147         # Ensure the extension directory exists
+    148         raise DeprecationWarning(
+    149             '`install_extension` and the `install_ext` magic have been deprecated since IPython 4.0'
+
+/usr/lib/python3/dist-packages/sage/__init__.py in load_ipython_extension(*args=(<sage.repl.interpreter.SageTerminalInteractiveShell object>,))
+      1 __all__ = ['all']
+      2 
+      3 # Set sage.__version__ to the current version number. This is analogous
+      4 # to many other Python packages.
+      5 from sage.version import version as __version__
+      6 
+      7 # Make sure that the correct zlib library is loaded. This is needed
+      8 # to prevent the system zlib to be loaded instead of the Sage one.
+      9 # See https://trac.sagemath.org/ticket/23122
+     10 import zlib
+     11 
+     12 # IPython calls this when starting up
+     13 def load_ipython_extension(*args):
+     14     import sage.repl.ipython_extension
+---> 15     sage.repl.ipython_extension.load_ipython_extension(*args)
+        sage.repl.ipython_extension.load_ipython_extension = <function load_ipython_extension at 0x7f81522e28b0>
+        args = (<sage.repl.interpreter.SageTerminalInteractiveShell object at 0x7f815443eca0>,)
+     16 
+     17 
+     18 # Monkey-patch inspect.isfunction() to support Cython functions.
+     19 def isfunction(obj):
+     20     """
+     21     Check whether something is a function.
+     22 
+     23     We assume that anything which has a genuine ``__code__``
+     24     attribute (not using ``__getattr__`` overrides) is a function.
+     25     This is meant to support Cython functions.
+     26 
+     27     EXAMPLES::
+     28 
+     29         sage: from inspect import isfunction
+     30         sage: def f(): pass
+     31         sage: isfunction(f)
+
+/usr/lib/python3/dist-packages/sage/repl/ipython_extension.py in wrapper(*args=(<sage.repl.interpreter.SageTerminalInteractiveShell object>,), **kwargs={})
+    547         ....:     if work:
+    548         ....:         return 'foo worked'
+    549         ....:     raise RuntimeError("foo didn't work")
+    550         sage: foo(False)
+    551         Traceback (most recent call last):
+    552         ...
+    553         RuntimeError: foo didn't work
+    554         sage: foo(True)
+    555         'foo worked'
+    556         sage: foo(False)
+    557         sage: foo(True)
+    558     """
+    559     @wraps(func)
+    560     def wrapper(*args, **kwargs):
+    561         if not wrapper.has_run:
+--> 562             result = func(*args, **kwargs)
+        result = undefined
+        global func = undefined
+        args = (<sage.repl.interpreter.SageTerminalInteractiveShell object at 0x7f815443eca0>,)
+        kwargs = {}
+    563             wrapper.has_run = True
+    564             return result
+    565     wrapper.has_run = False
+    566     return wrapper
+    567 
+    568 
+    569 @run_once
+    570 def load_ipython_extension(ip):
+    571     """
+    572     Load the extension in IPython.
+    573     """
+    574     # this modifies ip
+    575     SageCustomizations(shell=ip)
+
+/usr/lib/python3/dist-packages/sage/repl/ipython_extension.py in load_ipython_extension(ip=<sage.repl.interpreter.SageTerminalInteractiveShell object>)
+    560     def wrapper(*args, **kwargs):
+    561         if not wrapper.has_run:
+    562             result = func(*args, **kwargs)
+    563             wrapper.has_run = True
+    564             return result
+    565     wrapper.has_run = False
+    566     return wrapper
+    567 
+    568 
+    569 @run_once
+    570 def load_ipython_extension(ip):
+    571     """
+    572     Load the extension in IPython.
+    573     """
+    574     # this modifies ip
+--> 575     SageCustomizations(shell=ip)
+        global SageCustomizations = <class 'sage.repl.ipython_extension.SageCustomizations'>
+        global shell = undefined
+        ip = <sage.repl.interpreter.SageTerminalInteractiveShell object at 0x7f815443eca0>
+
+/usr/lib/python3/dist-packages/sage/repl/ipython_extension.py in __init__(self=<sage.repl.ipython_extension.SageCustomizations object>, shell=<sage.repl.interpreter.SageTerminalInteractiveShell object>)
+    420     def __init__(self, shell=None):
+    421         """
+    422         Initialize the Sage plugin.
+    423         """
+    424         self.shell = shell
+    425 
+    426         self.auto_magics = SageMagics(shell)
+    427         self.shell.register_magics(self.auto_magics)
+    428 
+    429         import sage.misc.edit_module as edit_module
+    430         self.shell.set_hook('editor', edit_module.edit_devel)
+    431 
+    432         self.init_inspector()
+    433         self.init_line_transforms()
+    434 
+--> 435         import sage.all # until sage's import hell is fixed
+        sage.all = undefined
+    436 
+    437         self.shell.verbose_quit = True
+    438         self.set_quit_hook()
+    439 
+    440         self.register_interface_magics()
+    441 
+    442         if SAGE_IMPORTALL == 'yes':
+    443             self.init_environment()
+    444 
+    445     def register_interface_magics(self):
+    446         """
+    447         Register magics for each of the Sage interfaces
+    448         """
+    449         from sage.repl.interface_magic import InterfaceMagic
+    450         InterfaceMagic.register_all(self.shell)
+
+/usr/lib/python3/dist-packages/sage/all.py in <module>
+     78         sig_on_reset as sig_on_count)
+     79 
+     80 from time                import sleep
+     81 from functools import reduce  # in order to keep reduce in python3
+     82 
+     83 import sage.misc.lazy_import
+     84 
+     85 # The psutil swap_memory() function tries to collect some statistics
+     86 # that may not be available and that we don't need. Hide the warnings
+     87 # that are emitted if the stats aren't available (Trac #28329). That
+     88 # function is called in two places, so let's install this filter
+     89 # before the first one is imported from sage.misc.all below.
+     90 import warnings
+     91 warnings.filterwarnings('ignore', category=RuntimeWarning,
+     92   message=r"'sin' and 'sout' swap memory stats couldn't be determined")
+---> 93 from sage.misc.all       import *         # takes a while
+        global sage.misc.all = undefined
+     94 from sage.typeset.all    import *
+     95 from sage.repl.all       import *
+     96 
+     97 from sage.misc.sh import sh
+     98 
+     99 from sage.libs.all       import *
+    100 from sage.data_structures.all import *
+    101 from sage.doctest.all    import *
+    102 
+    103 from sage.structure.all  import *
+    104 from sage.rings.all      import *
+    105 from sage.arith.all      import *
+    106 from sage.matrix.all     import *
+    107 
+    108 from sage.symbolic.all   import *
+
+/usr/lib/python3/dist-packages/sage/misc/all.py in <module>
+     69 
+     70 from .defaults import (set_default_variable_name,
+     71                         series_precision, set_series_precision)
+     72 
+     73 from .sage_eval import sage_eval, sageobj
+     74 
+     75 from .sage_input import sage_input
+     76 
+     77 lazy_import("sage.misc.cython", ["cython_lambda", "cython_create_local_so"])
+     78 lazy_import("sage.misc.cython", "cython_compile", "cython")
+     79 
+     80 from .persist import save, load, dumps, loads, db, db_save
+     81 
+     82 from .func_persist import func_persist
+     83 
+---> 84 from .functional import (additive_order,
+        global functional = undefined
+        global additive_order = undefined
+        global base_ring = undefined
+        global base_field = undefined
+        global basis = undefined
+        global category = undefined
+        global charpoly = undefined
+        global characteristic_polynomial = undefined
+        global coerce = undefined
+        global cyclotomic_polynomial = undefined
+        global decomposition = undefined
+        global denominator = undefined
+        global det = undefined
+        global dimension = undefined
+        global dim = undefined
+        global discriminant = undefined
+        global disc = undefined
+        global eta = undefined
+        global fcp = undefined
+        global gen = undefined
+        global gens = undefined
+        global hecke_operator = undefined
+        global image = undefined
+        global integral = undefined
+        global integrate = undefined
+        global integral_closure = undefined
+        global interval = undefined
+        global xinterval = undefined
+        global is_commutative = undefined
+        global is_even = undefined
+        global is_integrally_closed = undefined
+        global is_field = undefined
+        global is_odd = undefined
+        global kernel = undefined
+        global krull_dimension = undefined
+        global lift = undefined
+        global log = undefined
+        global log_b = undefined
+        global minimal_polynomial = undefined
+        global minpoly = undefined
+        global multiplicative_order = undefined
+        global ngens = undefined
+        global norm = undefined
+        global numerator = undefined
+        global numerical_approx = undefined
+        global n = undefined
+        global N = undefined
+        global objgens = undefined
+        global objgen = undefined
+        global order = undefined
+        global rank = undefined
+        global regulator = undefined
+        global round = undefined
+        global quotient = undefined
+        global quo = undefined
+        global isqrt = undefined
+        global squarefree_part = undefined
+        global symbolic_sum = undefined
+        global sum = undefined
+        global symbolic_prod = undefined
+        global product = undefined
+        global transpose = undefined
+     85                         base_ring,
+     86                         base_field,
+     87                         basis,
+     88                         category,
+     89                         charpoly,
+     90                         characteristic_polynomial,
+     91                         coerce,
+     92                         cyclotomic_polynomial,
+     93                         decomposition,
+     94                         denominator,
+     95                         det,
+     96                         dimension,
+     97                         dim,
+     98                         discriminant,
+     99                         disc,
+
+/usr/lib/python3/dist-packages/sage/misc/functional.py in <module>
+     12 - David Joyner (2005-12-20): More Examples
+     13 """
+     14 #*****************************************************************************
+     15 #       Copyright (C) 2004 William Stein <wstein@gmail.com>
+     16 #
+     17 # This program is free software: you can redistribute it and/or modify
+     18 # it under the terms of the GNU General Public License as published by
+     19 # the Free Software Foundation, either version 2 of the License, or
+     20 # (at your option) any later version.
+     21 #                  https://www.gnu.org/licenses/
+     22 #*****************************************************************************
+     23 from __future__ import absolute_import
+     24 from six.moves import range, builtins
+     25 from six import integer_types
+     26 
+---> 27 from sage.rings.complex_double import CDF
+        global sage.rings.complex_double = undefined
+        global CDF = undefined
+     28 from sage.rings.real_double import RDF, RealDoubleElement
+     29 from sage.rings.integer_ring import ZZ
+     30 from sage.rings.integer import Integer
+     31 from sage.misc.superseded import deprecation
+     32 
+     33 ##############################################################################
+     34 # There are many functions on elements of a ring, which mathematicians
+     35 # usually write f(x), e.g., it is weird to write x.log() and natural
+     36 # to write log(x).  The functions below allow for the more familiar syntax.
+     37 ##############################################################################
+     38 
+     39 
+     40 def additive_order(x):
+     41     """
+     42     Return the additive order of ``x``.
+
+/usr/lib/python3/dist-packages/sage/rings/integer.pxd in init sage.rings.complex_double (build/cythonized/sage/rings/complex_double.c:23743)()
+      1 from sage.libs.gmp.types cimport __mpz_struct, mpz_t, mpz_ptr
+      2 from sage.libs.ntl.types cimport ZZ_c
+      3 
+      4 from sage.structure.element cimport EuclideanDomainElement, RingElement
+      5 from sage.categories.morphism cimport Morphism
+      6 
+----> 7 cdef class Integer(EuclideanDomainElement):
+        global cdef = undefined
+        global Integer = undefined
+        global EuclideanDomainElement = undefined
+      8     # This is really of type mpz_t, but we don't use the mpz_t typedef
+      9     # to work around Cython bug
+     10     # https://github.com/cython/cython/issues/1984
+     11     cdef __mpz_struct value[1]
+     12 
+     13     cdef int _to_ZZ(self, ZZ_c *z) except -1
+     14     cdef void set_from_mpz(self, mpz_t value)
+     15     cdef hash_c(self)
+     16 
+     17     cpdef __pari__(self)
+     18 
+     19     cpdef _shift_helper(Integer self, y, int sign)
+     20     cpdef _add_(self, other)
+     21     cpdef _mul_(self, other)
+     22     cpdef _pow_(self, other)
+     23     cdef _and(Integer self, Integer other)
+     24     cdef _or(Integer self, Integer other)
+     25     cdef _xor(Integer self, Integer other)
+     26 
+     27     cpdef size_t _exact_log_log2_iter(self,Integer m)
+     28     cpdef size_t _exact_log_mpfi_log(self,m)
+     29     cpdef RingElement _valuation(Integer self, Integer p)
+     30     cdef object _val_unit(Integer self, Integer p)
+     31     cdef Integer _divide_knowing_divisible_by(Integer self, Integer right)
+
+/usr/lib/python3/dist-packages/sage/rings/rational.pxd in init sage.rings.integer (build/cythonized/sage/rings/integer.c:53105)()
+      1 from sage.libs.gmp.types cimport mpq_t
+      2 
+      3 cimport sage.structure.element
+      4 cimport sage.rings.integer as integer
+      5 
+      6 cpdef rational_power_parts(a, Rational b, factor_limit=?)
+      7 
+----> 8 cdef class Rational(sage.structure.element.FieldElement):
+        global cdef = undefined
+        global Rational = undefined
+        global sage.structure.element.FieldElement = undefined
+      9     cdef mpq_t value
+     10 
+     11     cpdef _add_(self, other)
+     12     cpdef _mul_(self, other)
+     13     cpdef _pow_(self, other)
+     14     cdef __set_value(self, x, unsigned int base)
+     15     cdef void set_from_mpq(Rational self, mpq_t value)
+     16     cdef _lshift(self, long int exp)
+     17     cdef _rshift(self, long int exp)
+     18 
+     19     cdef _val_unit(self, integer.Integer p)
+
+/usr/lib/python3/dist-packages/sage/rings/rational.pyx in init sage.rings.rational (build/cythonized/sage/rings/rational.c:39884)()
+     80 from sage.arith.rational_reconstruction cimport mpq_rational_reconstruction
+     81 
+     82 from sage.structure.coerce cimport is_numpy_type
+     83 
+     84 from sage.libs.gmp.pylong cimport mpz_set_pylong
+     85 
+     86 from sage.structure.coerce cimport coercion_model
+     87 from sage.structure.element cimport Element
+     88 from sage.structure.element import coerce_binop
+     89 from sage.structure.parent cimport Parent
+     90 from sage.categories.morphism cimport Morphism
+     91 from sage.categories.map cimport Map
+     92 
+     93 
+     94 
+---> 95 import sage.rings.real_mpfr
+        global sage.rings.real_mpfr = undefined
+     96 import sage.rings.real_double
+     97 from libc.stdint cimport uint64_t
+     98 from sage.libs.gmp.binop cimport mpq_add_z, mpq_mul_z, mpq_div_zz
+     99 
+    100 from cpython.int cimport PyInt_AS_LONG
+    101 
+    102 cimport sage.rings.fast_arith
+    103 import  sage.rings.fast_arith
+    104 
+    105 cdef sage.rings.fast_arith.arith_int ai
+    106 ai = sage.rings.fast_arith.arith_int()
+    107 
+    108 cdef object numpy_long_interface = {'typestr': '=i4' if sizeof(long) == 4 else '=i8' }
+    109 cdef object numpy_int64_interface = {'typestr': '=i8'}
+    110 cdef object numpy_object_interface = {'typestr': '|O'}
+
+/usr/lib/python3/dist-packages/sage/rings/real_mpfr.pyx in init sage.rings.real_mpfr (build/cythonized/sage/rings/real_mpfr.c:44238)()
+----> 1 r"""
+      2 Arbitrary Precision Real Numbers
+      3 
+      4 AUTHORS:
+      5 
+      6 - Kyle Schalm (2005-09)
+      7 
+      8 - William Stein: bug fixes, examples, maintenance
+      9 
+     10 - Didier Deshommes (2006-03-19): examples
+     11 
+     12 - David Harvey (2006-09-20): compatibility with Element._parent
+     13 
+     14 - William Stein (2006-10): default printing truncates to avoid base-2
+     15   rounding confusing (fix suggested by Bill Hart)
+     16 
+     17 - Didier Deshommes: special constructor for QD numbers
+     18 
+     19 - Paul Zimmermann (2008-01): added new functions from mpfr-2.3.0,
+     20   replaced some, e.g., sech = 1/cosh, by their original mpfr version.
+     21 
+     22 - Carl Witty (2008-02): define floating-point rank and associated
+     23   functions; add some documentation
+     24 
+     25 - Robert Bradshaw (2009-09): decimal literals, optimizations
+     26 
+     27 - Jeroen Demeyer (2012-05-27): set the MPFR exponent range to the
+     28   maximal possible value (:trac:`13033`)
+     29 
+     30 - Travis Scrimshaw (2012-11-02): Added doctests for full coverage
+     31 
+
+/usr/lib/python3/dist-packages/sage/rings/complex_number.pxd in init sage.libs.mpmath.utils (build/cythonized/sage/libs/mpmath/utils.c:8633)()
+      1 from sage.libs.mpfr.types cimport mpfr_t, mpfr_prec_t
+      2 
+      3 cimport sage.structure.element
+      4 from .real_mpfr cimport RealNumber
+      5 
+----> 6 cdef class ComplexNumber(sage.structure.element.FieldElement):
+        global cdef = undefined
+        global ComplexNumber = undefined
+        global sage.structure.element.FieldElement = undefined
+      7     cdef mpfr_t __re
+      8     cdef mpfr_t __im
+      9     cdef mpfr_prec_t _prec
+     10     cdef object _multiplicative_order
+     11 
+     12     cpdef _add_(self, other)
+     13     cpdef _mul_(self, other)
+     14     cdef RealNumber abs_c(ComplexNumber self)
+     15     cdef RealNumber norm_c(ComplexNumber self)
+     16 
+     17     cdef ComplexNumber _new(self)
+
+/usr/lib/python3/dist-packages/sage/rings/complex_number.pyx in init sage.rings.complex_number (build/cythonized/sage/rings/complex_number.c:24353)()
+     32 from sage.libs.mpfr cimport *
+     33 from sage.structure.element cimport FieldElement, RingElement, Element, ModuleElement
+     34 from sage.categories.map cimport Map
+     35 
+     36 from .complex_double cimport ComplexDoubleElement
+     37 from .real_mpfr cimport RealNumber
+     38 
+     39 import sage.misc.misc
+     40 import sage.rings.integer as integer
+     41 import sage.rings.infinity as infinity
+     42 
+     43 from sage.libs.mpmath.utils cimport mpfr_to_mpfval
+     44 from sage.rings.integer_ring import ZZ
+     45 
+     46 cimport gmpy2
+---> 47 gmpy2.import_gmpy2()
+        global gmpy2.import_gmpy2 = undefined
+     48 
+     49 cdef object numpy_complex_interface = {'typestr': '=c16'}
+     50 cdef object numpy_object_interface = {'typestr': '|O'}
+     51 
+     52 cdef mpfr_rnd_t rnd
+     53 rnd = MPFR_RNDN
+     54 
+     55 cdef double LOG_TEN_TWO_PLUS_EPSILON = 3.321928094887363 # a small overestimate of log(10,2)
+     56 
+     57 def set_global_complex_round_mode(n):
+     58     """
+     59     Set the global complex rounding mode.
+     60 
+     61     .. WARNING::
+     62 
+
+AttributeError: module 'gmpy2' has no attribute '_C_API'
+
+***************************************************************************
+
+History of session input:
+*** Last line of input (may not be in above history):
